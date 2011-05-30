@@ -1,0 +1,104 @@
+/*Extruder Content*/
+.extruder .text{ font:8pt "lucida grande", tahoma, verdana, arial, sans-serif; }
+.extruder .content{	display:none; }
+.extruder .content, .extruder.open .content{
+	height: 100%;
+	padding: 10px;
+	padding-right: 0px;
+	background: #ffffff;
+	opacity: 0.85;
+	filter: alpha(opacity=85);	
+}
+
+
+/*extruder LEFT*/
+
+.extruder.left{ height:100%; }
+.extruder.left .content{ border-right:3px solid #ff0000; }
+.extruder.left.open .content{ }
+.extruder.left .footer{ display:none; }
+.extruder.left .ext_wrapper{ height:100%; left:0; }
+.extruder.left .flap .flapLabel{ background: #ff0000; }
+.extruder.left .flap{
+  cursor: pointer;
+  font-size:8pt;
+  font-family: Tahoma;
+  color:white;
+  top:0;
+  padding:10px 0 10px 5px;
+  /* chg this to get closer */
+  margin-right:-37px;
+  margin-right:-30px;
+  background:#ff0000;
+  width:25px;
+  position:absolute;
+  right:0;
+  -moz-border-radius:0 10px 10px 0;
+  -webkit-border-top-right-radius:10px;
+  -webkit-border-bottom-right-radius:10px;
+  /*
+	  -moz-box-shadow:#999 2px 0px 5px;
+	  -webkit-box-shadow:#999 2px 0px 5px;
+  */
+}
+.extruder.left .flap .flapLabel{ background:#000; }
+
+/*extruder RIGHT*/
+
+.extruder.right{ height:100%; }
+.extruder.right .content{ border-left:3px solid #000; }
+.extruder.right.open .content{ }
+.extruder.right.footer{ display:none; }
+.extruder.right .ext_wrapper{ height:100%; right:0; }
+.extruder.right.flap .flapLabel{ background: #000; }
+.extruder.right .flap{
+  cursor: pointer;
+  font-size:8pt;
+  font-family: Tahoma;
+  color:white;
+  top:0;
+  padding:10px 0 10px 5px;
+  background:#000;
+  width:25px;
+  /*height:150px;*/
+  position:absolute;
+  /*overflow:hidden;*/
+  left:-30px;
+  -moz-border-radius:10px 0 0 10px;
+  -webkit-border-top-left-radius:10px;
+  -webkit-border-bottom-left-radius:10px;
+}
+.extruder.right .flap .flapLabel{ background:#000; }
+
+
+
+
+
+
+
+
+/* ---------------------------
+
+	 	  SCROLLBAR 
+
+ --------------------------- */
+
+.scroll { width: 600px; clear: both; height: 100px; overflow: hidden; }
+.scroll .viewport { width: 580px; height: 100%; overflow: hidden; position: relative; }
+.scroll .overview { list-style: none; position: absolute; left: 0; top: 0; }
+.scroll .thumb, .scroll .thumb .end { background-color: #999999; }
+.scroll .scrollbar { position: relative; float: right; width: 10px; }
+.scroll .track { background-color: #f7f7f7; height: 100%; position: relative; padding: 0 1px; }
+.scroll .track, .scroll .thumb {
+	-moz-border-radius:5px;
+	-webkit-border-radius:5px;
+}
+.scroll .thumb .end { 
+	-moz-border-radius:5px 5px 0 0;
+	-webkit-border-radius: 5px 5px 0 0;
+}
+
+.scroll .thumb { height: 20px; width: 10px; cursor: pointer; overflow: hidden; position: absolute; top: 0; left: 0; }
+.scroll .thumb .end { overflow: hidden; height: 5px;  }
+.scroll .disable{ display: none; }
+

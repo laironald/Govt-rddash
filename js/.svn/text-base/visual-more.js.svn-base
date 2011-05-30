@@ -1,0 +1,144 @@
+/*
+// Here's my data model
+var viewModel = {
+    firstName : ko.observable("Planet"),
+    lastName : ko.observable("Earth")
+};
+viewModel.fullName = ko.dependentObservable(function () {
+    // Knockout tracks dependencies automatically. It knows that fullName depends on firstName and lastName, because these get called when evaluating fullName.
+    return viewModel.firstName() + " " + viewModel.lastName();
+});
+*/var lMod, legendModel, mapToolTip, sideAttrs;
+legendModel = (function() {
+  function legendModel() {}
+  legendModel.prototype.OrgList = ko.observableArray([]);
+  legendModel.prototype.LabelList = ko.observableArray([]);
+  return legendModel;
+})();
+lMod = new legendModel;
+ko.applyBindings(lMod);
+/*-----------------
+	KNOCKOUT.JS
+*/
+/*
+class ViewModel
+	firstName: ko.observable()
+	lastName:  ko.observable()
+	doit: ->
+		cssColor=prompt("FD")
+		@firstName(cssColor)
+		#alert(@firstName())
+
+vM = new ViewModel
+vM.fullName = ko.dependentObservable -> "#{vM.firstName()} #{vM.lastName()}"
+vM.firstName("ron").lastName('lai')
+ko.applyBindings vM
+
+#viewModel.doit()
+*/
+/*-----------------
+	GLOBAL VARIABLES
+*/
+mapToolTip = function(html) {
+  if (html == null) {
+    html = "";
+  }
+  if (html === "") {
+    return $("#mapToolTip").css("display", "none");
+  } else {
+    if (typeof mousey != "undefined" && mousey !== null) {
+      return $('#mapToolTip').html(html).css('top', mousey.pageY + 25).css('left', mousey.pageX - 5).css('display', 'block');
+    }
+  }
+};
+sideAttrs = function(type) {
+  var allMarks, attr, attrAdd, i, key, label, latlng, template, _i, _len, _ref, _results;
+  if (type == null) {
+    type = "";
+  }
+  attrAdd = function(i) {
+    var type, _i, _len, _ref, _results;
+    _ref = _.keys(attr);
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      type = _ref[_i];
+      _results.push(attr[type].add(dataB.marks[type][i]));
+    }
+    return _results;
+  };
+  latlng = $.data($("#map")[0], "latlng");
+  switch (type) {
+    case "":
+      attr = {
+        "Label": new dict,
+        "Org": new dict
+      };
+      break;
+    case "Label":
+      attr = {
+        "Org": new dict
+      };
+      break;
+    case "Org":
+      attr = {
+        "Label": new dict
+      };
+  }
+  allMarks = true;
+  if (latlng != null) {
+    if (latlng.markers.length > 0) {
+      allMarks = false;
+    }
+  }
+  if (allMarks) {
+    $(dataB.marks.cnt).each(function(i) {
+      return attrAdd(i);
+    });
+  } else {
+    $(latlng['markers']).each(function(k, i) {
+      return attrAdd(i);
+    });
+  }
+  _ref = _.keys(attr);
+  _results = [];
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+    type = _ref[_i];
+    template = [];
+    if (!(params[type] != null)) {
+      params[type] = [];
+    }
+    _results.push((function() {
+      var _ref, _ref2;
+      if (params[type].length === 0) {
+        attr[type].sort();
+        for (i = 0, _ref = _.min([99, attr[type].ranked.length - 1]); (0 <= _ref ? i <= _ref : i >= _ref); (0 <= _ref ? i += 1 : i -= 1)) {
+          key = attr[type].ranked[i][0];
+          if ((dataB.colors["" + key + "|" + type] != null) && key !== "") {
+            label = dataB.colors["" + key + "|" + type][1];
+            template.push({
+              type: type,
+              key: key,
+              label: key === "" ? "Unattributed" : label,
+              label_ex: type === "Label" && key !== "" ? ((_ref2 = params.table) === "pat" || _ref2 === "app" ? " (USPTO Class# " + key + ")" : "") : void 0
+            });
+          }
+        }
+        return $("#sect" + type).html($("#navclicky").tmpl(template));
+      }
+    })());
+  }
+  return _results;
+};
+$("div.list a").live("click", function(event) {
+  var keys, type;
+  $(this).toggleClass("sel");
+  type = $(this).attr("type");
+  keys = $.data($("#map")[0], "params");
+  keys["Org"] = [];
+  keys["Label"] = [];
+  $.each($(this).parent().children(".sel"), function(i, k) {
+    return keys[type].push($(this).attr("key"));
+  });
+  setVal({});
+  return event.preventDefault();
+});

@@ -1,0 +1,579 @@
+/*------------------
+     G L O B A L  
+  V A R I A B L E S
+  ------------------*/
+
+	var bounds = { CD:null, US:null };
+	var defColor = { CD:{ Sel:"#3b5998", Out:"#666666", Blk:"#d4dae8" },
+	    		     US:{ Sel:"#3b5998", Out:"#666666", Blk:"#ffffff" } };
+	var hoverStats = null;
+	var detailhover = false;
+
+/*------------------
+     G L O B A L  
+  F U N C T I O N S
+  ------------------*/
+
+// http://articles.sitepoint.com/article/oriented-programming-1
+// http://articles.sitepoint.com/article/oriented-programming-2
+//   notes: arguments is automatically created for all values..
+
+	function addCommas(nStr)
+	{
+		nStr += '';
+		x = nStr.split('.');
+		x1 = x[0];
+		x2 = x.length > 1 ? '.' + x[1] : '';
+		var rgx = /(\d+)(\d{3})/;
+		while (rgx.test(x1)) {
+			x1 = x1.replace(rgx, '$1' + ',' + '$2');
+		}
+		return x1 + x2;
+	}
+
+	function setVal(vals) {
+		$(".mapOverlay").remove();
+		if (vals==null) 
+			vals = $.data($("#map")[0], "params");
+
+		if (vals!=null) {
+			params = $.data($("#map")[0], "params");
+			start = { year:$("#yrRg").html() };
+			$.extend(start, { agency: $("#agency").val() });
+
+			$.extend(params, vals);
+			$.extend(vals, params);
+			$.extend(vals, start);
+
+			valN = new Object();
+			$($.keys(vals)).each(function(i,k) { if (vals[k]!=null) valN[k]=vals[k] });
+			$.data($("#map")[0], "params", valN);
+
+			if (hoverStats == null) 
+				$.getJSON("api/hover.stats.php", valN, function(jStats) { hoverStats = jStats; mapToolTip(""); });
+
+			refreshGeo();
+			if (!init) 
+				createDataTable({});
+		}
+	}
+	//pass an array - this returns the most frequent item and sets it as this.id
+	function maxItem() {
+		this.max = 0;
+		this.id = '';
+		this.keys = new Object();
+		this.add = function(obj) {
+			//added this so the boring white thing doesn't show up
+			this.keys[obj] = (this.keys[obj]==null)?1 :this.keys[obj]+1;
+			this.max = Math.max(this.keys[obj], this.max);
+			this.id = (this.keys[obj]==this.max)?obj :this.id;
+		}
+		this.ranked = [];
+		this.status = function() {
+			alert(this.id + ':' + this.max);
+		}
+		this.sort = function() {
+			function sortNumber(a, b) { return a[0] - b[0];	}
+			for(y in this.keys) {
+				this.ranked.push([parseInt(this.keys[y]), y]);
+			}
+			this.ranked.sort(sortNumber).reverse();
+			return this.ranked;
+		}
+	}
+	//converts "RON~1/LAI~2" => {fetch:{RON:1, LAI:2}}
+	function dict(strg) {
+		this.fetch = new Object();
+		var keys = this.fetch;
+		if (strg!=null) {
+			$(strg.split("/")).each(function(i,k) { 
+				r = k.split('~'); 
+				keys[r[0]] = (r.length==1)?1:parseInt(r[1]); 
+			});
+		}
+		this.fetch = keys;
+
+		this.add = function(strg) {
+			if (strg!=null) {
+				$(strg.split("/")).each(function(i,k) { 
+					r = k.split('~');
+					keys[r[0]] = ((keys[r[0]]==null)?0:keys[r[0]]) + ((r.length==1)?1:parseInt(r[1])); 
+				});
+			}
+			this.fetch = keys;
+		}
+		this.ranked = [];
+		this.sort = function() {
+			function sortNumber(a, b) { return a[1] - b[1];	}
+			for(y in this.fetch) {
+				this.ranked.push([y, parseInt(this.fetch[y])]);
+			}
+			this.ranked.sort(sortNumber).reverse();
+			//return this.ranked;
+		}
+	}
+
+	//checks 
+	function showChecked(obj, option) {
+		//option like ":checked"
+		var allVals = [];
+		$(obj).parent().children("input"+option).each(function() { allVals.push(this.id); });
+		return allVals;
+	}
+	$.extend({keys: function(obj){ var a = []; $.each(obj, function(k){ a.push(k) }); return a; }}); //write dictionary keys
+
+	//URL Encode
+	$.extend({URLEncode:function(c){var o='';var x=0;c=c.toString();var r=/(^[a-zA-Z0-9_.]*)/;
+	  while(x<c.length){var m=r.exec(c.substr(x));
+		if(m!=null && m.length>1 && m[1]!=''){o+=m[1];x+=m[1].length;
+		}else{if(c[x]==' ')o+='+';else{var d=c.charCodeAt(x);var h=d.toString(16);
+		o+='%'+(h.length<2?'0':'')+h.toUpperCase();}x++;}}return o;},
+	URLDecode:function(s){var o=s;var binVal,t;var r=/(%[^%]{2})/;
+	  while((m=r.exec(o))!=null && m.length>1 && m[1]!=''){b=parseInt(m[1].substr(1),16);
+	  t=String.fromCharCode(b);o=o.replace(m[1],t);}return o;}
+	});
+
+	//http://groups.google.com/group/google-maps-js-api-v3/browse_thread/thread/60fe6bde43382944/a3860f767fbf2340?lnk=raot
+	function getOverlayView(map){ 
+		var ov = new G.OverlayView(); 
+		ov.onAdd = function(){}; 
+		ov.draw = function(){}; 
+		ov.onRemove = function(){}; 
+		ov.setMap(map);
+		return ov; 
+	} 
+	markerOverFunction = function(mark, latlng) {
+		return function(e) {
+			var pos = getOverlayView(map).getProjection().fromLatLngToDivPixel(latlng); 
+			pos.x = pos.x - mark.size;
+			cObj = new maxItem();
+			$(mark).each(function(index) { cObj.add([mark.block.AsgNum, mark.col]); }); 
+		};
+	};
+	
+    function clearClusters(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        markerClusterer.clearMarkers();
+    } 
+
+	function createDataTable(valN) {
+
+		vals = $.data($("#map")[0], "params");
+		$("#example_wrapper").children().detach();
+		table = $('<table cellspacing="0" cellpadding="0" id="example"></table>')
+		th = [];
+
+		if (vals.table == "grant") {
+			thsize = [4, 8, 6, 6, 16, 24, 22, 10, 4];
+			labels = ['Year', 'Grant Number', 'Federal Agency', 'Grant Amount', 'Receiving Institution', 'Description', 'Topic', 'City', 'State'];
+			XInner = "250%";
+			aaSort = [[0, 'desc'], [3, 'desc']];
+		} else if (vals.table=="pat") {
+			thsize = [6, 6, 14, 30, 6, 24, 10, 4];
+			labels = ['Patent Number', 'Federal Agency', 'Institution/Company Name', 'Description', 'Date Applied', 'Technology Class', 'City', 'State'];
+			XInner = "250%";
+			aaSort = [[4, 'desc'], [1, 'asc']];
+		} else if (vals.table == "app") {
+			thsize = [10, 10, 20, 10, 30, 10, 10];
+			labels = ['Patent Number', 'Federal Agency', 'Institution/Company Name', 'Date Applied', 'Technology Class', 'City', 'State'];
+			XInner = "200%";
+			aaSort = [[3, 'desc'], [1, 'asc']];
+		} else if (vals.table == "pub") {
+			thsize = [6, 8, 8, 8, 10, 20, 16, 6, 12, 6];
+			labels = ['Year', 'Publication Number', 'Grant Number', 'Federal Agency', 'Receiving Institution', 'Title', 'Journal', 'Publication Year', 'City', 'State'];
+			XInner = "250%";
+			aaSort = [[0, 'desc']];
+		}
+		$(labels).each(function(i, k) { th.push("<th width='"+thsize[i]+"%'>"+k+"<br/></th>"); });
+		table.append('<thead><tr>'+th.join('')+'</tr></thead>')
+		table.append('<tbody></tbody>');
+		table.append('<tfoot><tr><th></th></tr></tfoot>');
+
+		if (!(vals.State==null && vals.CD == null)) {
+			$("#polyselect").val((vals.CD=="0")?vals.State:(vals.State+"-"+vals.CD));
+
+			params = [];
+/*
+			$.each(vals, function(k, v) { if (v!=null) params.push(k+"="+$.URLEncode(v)); });
+			$.each(valN, function(k, v) { if (v!=null) params.push(k+"="+$.URLEncode(v)); });
+			params.push("mode=csv");
+*/
+
+			$.each(vals, function(k, v) { if (v!=null) params.push("<input type='hidden' name='"+k+"' value='"+v+"' />"); });
+			$.each(valN, function(k, v) { if (v!=null) params.push("<input type='hidden' name='"+k+"' value='"+v+"' />"); });
+			params.push("<input type='hidden' name='mode' value='csv' />");
+
+			if ( vals.State != "") {
+				action = '$("#download").submit();';
+				$("#downloadcsv").html("<form action='api/data.php' method='post' id='download'>" + params.join('') + "<a onclick='javascript: " + action + "'>Download selected data as CSV</a></form>");
+
+				$("#example_wrapper").css("min-height", "675px");
+				$("#example_wrapper").html("<br/><br/>");
+				$("#example_wrapper").append(table);
+				$("#example").dataTable({
+					"aaSorting": aaSort,
+					"sDom": '<"H"flr>t<"F"ip>',
+					"iDisplayLength": 100,
+					"sScrollY": "500px",
+					"sScrollX": "100%",
+					"sScrollXInner": XInner,
+					"bLengthChange": true,
+					"bJQueryUI": true,
+					"bProcessing": true,
+					"bServerSide": true,
+					"bRetrieve": true,
+					//"sCookiePrefix": "patGeo_"+,
+					//"bStateSave": true,
+					//"sPaginationType": "full_numbers",
+					"sAjaxSource": "api/data.php",
+					"fnServerData": function ( sSource, aoData, fnCallback ) {
+						$($.keys(vals)).each(function(i,k) { if (vals[k]!=null) aoData.push({"name":k, "value":vals[k]}); });
+						$($.keys(valN)).each(function(i,k) { if (valN[k]!=null) aoData.push({"name":k, "value":valN[k]}); });
+						$.ajax({
+							url: sSource, 
+							data: aoData,
+							dataType: 'json',
+							type: "POST",
+							success: function(json) { fnCallback(json);	}
+						});
+					}
+				});
+			}
+		}
+	}
+
+
+/*------------------
+        M A P 
+  F U N C T I O N S
+  ------------------*/
+
+    function initializeGeo(mapObj, center) {
+		map = new G.Map($(mapObj).get(0), {
+			navigationControlOptions: { style:G.NavigationControlStyle.ZOOM_PAN },
+			disableDoubleClickZoom: true,
+			streetViewControl: false, 
+			mapTypeControlOptions: { 
+				style: G.MapTypeControlStyle.DROPDOWN_MENU,
+				mapTypeIds: ["Blank", G.MapTypeId.ROADMAP, G.MapTypeId.HYBRID, G.MapTypeId.SATELLITE, G.MapTypeId.TERRAIN] }
+		});
+		map.mapTypes.set("Blank", new G.StyledMapType([{ //style for regular map
+					featureType: "all",
+					elementType: "all",
+					stylers: [ { visibility: 'off' }, { lightness: 50 }, { hue: "#0000ff" } ]
+				}], { name: "Blank" }));
+		map.setMapTypeId(G.MapTypeId.TERRAIN);
+		G.event.addListener(map, 'maptypeid_changed', function() { setVal(); });
+		var focDiv = $('<div></div>').get(0);
+		$(focDiv).append($('<div></div>').addClass('control').html('Highlight selected area'));
+		G.event.addDomListener(focDiv, 'click', function() { GoPan(true); });
+		focDiv.index = 1;
+		map.controls[G.ControlPosition.TOP_RIGHT].push(focDiv);
+
+		var usaDiv = $('<div></div>').get(0);
+		$(usaDiv).append($('<div></div>').addClass('control').html('USA View'));
+		G.event.addDomListener(usaDiv, 'click', function() { map.setZoom(4); map.panTo(new G.LatLng(38.115320836, -96.6304735)); });
+		usaDiv.index = 1;
+		map.controls[G.ControlPosition.TOP_RIGHT].push(usaDiv);
+
+		map.enableKeyDragZoom({
+			key: "shift", 
+			boxStyle:  { border: "5px solid #999999", backgroundColor: "#ffffff", opacity: 0.4 },
+			veilStyle: { backgroundColor: "#d4dae8", opacity: 0.8 }
+		});
+		map.setZoom(4);
+		map.setCenter(new G.LatLng(38.115320836, -96.6304735));
+
+
+		var trafficOptions = {
+			getTileUrl: function(coord, zoom) {
+				//return "http://mt3.google.com/mapstt?" + "zoom=" + zoom + "&x=" + coord.x + "&y=" + coord.y + "&client=api";
+				return "http://readidata.nitrd.gov/rddash/api/mapTile.php?" + "z=" + zoom + "&x=" + coord.x + "&y=" + coord.y + "&c=cd";
+			},
+			tileSize: new google.maps.Size(256, 256),
+			isPng: true
+		};
+
+		var trafficMapType = new google.maps.ImageMapType(trafficOptions);
+		map.overlayMapTypes.insertAt(0, trafficMapType);
+/*
+
+*/
+
+	}
+
+/******************************************************/
+
+	
+	function refresher(params) {
+		if (markerClusterer!=null) markerClusterer.clearMarkers();
+		if (kml!=null) 		kml.setMap(null);
+		if (prevLine!=null) prevLine.setMap(null);
+	
+		if (bounds['CD'] == null && params.CD != null) 
+			loadBound('CD');
+		else if (bounds['US'] == null)
+			loadBound('US');
+	}
+
+	function GoPan(fit) {
+		params = $.data($("#map")[0], "params");
+		if (params.CD == null) {
+			map.setZoom(4);
+			map.panTo(new G.LatLng(38.115320836, -96.6304735));
+		} else {
+			fitBd = new G.LatLngBounds();
+			for(var i=0; i<bounds['US'].length; i++)
+				if (params.State == bounds['US'][i].marks[0])
+					bounds['US'][i].getPath().forEach(function(latlng) { fitBd.extend(latlng); });
+			/*					
+				if (params.CD == 0) {
+					for(var i=0; i<bounds['US'].length; i++)
+						if (params.State == bounds['US'][i].marks[0])
+							bounds['US'][i].getPath().forEach(function(latlng) { fitBd.extend(latlng); });
+				} else {
+					for(var i=0; i<bounds['CD'].length; i++)
+						if ((params.State+"-"+params.CD) == bounds['CD'][i].marks.join("-"))
+							bounds['CD'][i].getPath().forEach(function(latlng) { fitBd.extend(latlng); });
+				}
+			*/
+			if (fit)
+				map.fitBounds(fitBd);
+			else
+				map.panTo(fitBd.getCenter());
+		}
+	}
+	function loadBound(type) {
+		//type="CD"
+		/* KMZ THING HERE */
+		params = $.data($("#map")[0], "params");
+
+		if (type == "CD") { //Load KML
+			fitBd = new G.LatLngBounds();
+			jsonFile = "kml/json/"+params.State+"-cd.json";
+
+			//No real thing as CD right now... let's just do State level zooms
+			GoPan(true);
+			return;
+			//remove this when we want to go back to CD
+
+		} else if (type == "US") {
+			jsonFile = "kml/json/USA.json";
+		}
+		bounds[type] = [];		
+
+		$.getJSON(jsonFile, function(json) {
+			params = $.data($("#map")[0], "params"); //reinitialize it... seems useful
+			for (var i=0; i<json.coords.length; i++) {
+				for (var j=0; j<json.coords[i].length; j++) {
+					coords = [];
+					for (var k=0; k<json.coords[i][j].length; k++) {
+						coords.push(new G.LatLng(parseFloat(json.coords[i][j][k][1]), parseFloat(json.coords[i][j][k][0])));
+					}
+					var selBool = (json.marks[i].join("-")==(params.State+"-"+params.CD));
+					var bound = new G.Polygon({
+						paths: coords,
+						strokeColor: defColor[type]['Out'],
+						strokeOpacity: 0.9,
+						strokeWeight: 1,
+						fillColor: selBool?defColor[type]['Sel']:defColor[type]['Blk'],
+						fillOpacity: 0.5,
+						marks: json.marks[i]
+					});
+				
+					//draw the bounds
+					if (selBool && init)
+						$(coords).each(function(index, value) { fitBd.extend(value); });
+				
+					if (type == "US" && params.State == bound.marks[0]) 
+						bound.setMap(null);
+					else
+						bound.setMap(map); 
+					G.event.addListener(bound, 'mousemove', boundEvt("mousemove", type));
+					G.event.addListener(bound, 'mouseover', boundEvt("mouseover", type));
+					G.event.addListener(bound, 'mouseout',  boundEvt('mouseout', type));
+					G.event.addListener(bound, 'click',     boundEvt('click', type));
+					bounds[type].push(bound);
+				}
+			}
+			if (type == "CD" && init) {
+				map.fitBounds(fitBd);
+				GoPan(true);
+			} 
+			if (type == "CD" && bounds['US']!=null && init==false) {
+				for(var i=0; i<bounds['US'].length; i++)
+					if (params.State == bounds['US'][i].marks[0]) {
+						bounds['US'][i].setMap(null);
+					}
+				if (map.getZoom() == 4)
+					map.setZoom(5);
+				GoPan(false);
+			}
+			init = false;
+			
+		});
+	}
+	function boundEvt(action, type) {	
+		return function(evt) {		
+			if (detailhover) return;
+			
+			params = $.data($("#map")[0], "params");
+			StCD = params.State+"-"+params.CD;
+
+			//Always show hover
+			if (action == "mouseover" || action == "mousemove") {
+				cSel = (type == "CD")?this.marks.join("|"):this.marks[0];
+				html = ((type == "CD")?("Congressional District: "+this.marks[0]+"-"+this.marks[1]):(this.marks[1])) + "<hr/>";
+
+				if (hoverStats==null) 
+					html = html + "Loading statistics...";
+				else {
+					if (params.table=="pat" || params.table=="app")
+						html = html + "Total Patents: " + hoverStats[type][cSel] + "<br/>";
+					if ((params.agency == "NIH" || params.agency == "") && $.inArray("NIH|"+cSel, $.keys(hoverStats[type]))!=-1)
+						html = html + "NIH funded: " + hoverStats[type]["NIH|"+cSel] + "<br/>";
+					if ((params.agency == "NSF" || params.agency == "") && $.inArray("NSF|"+cSel, $.keys(hoverStats[type]))!=-1)
+						html = html + "NSF funded: " + hoverStats[type]["NSF|"+cSel] + "<br/>";
+				}
+				mapToolTip(html);
+				if (action == "mousemove") return;
+			} else
+				mapToolTip("");
+
+
+			if (action == "click") {
+				if (type == "CD") {
+					if (!$.browser.msie) {
+						for(i=0; i<bounds[type].length; i++) {
+							if (bounds[type][i].marks.join("-") == StCD && this.marks.join("-") != StCD)
+								bounds[type][i].setOptions({fillColor:defColor[type]['Blk'], fillOpacity:0.5});
+						}
+					}
+					setVal({ CD:parseInt(this.marks[1]), State:this.marks[0], Org:null, Label:null });
+					//GoPan(false); //this allows us to pan to individual Congressional Districts
+				} else if (type == "US") {
+					GoPan(false);
+					if (bounds['CD'] != null) {
+						for(i=0; i<bounds['CD'].length; i++)
+							bounds['CD'][i].setMap(null);
+						bounds['CD'] = null;
+					}
+					setVal({ CD:"0", State:this.marks[0], Org:null, Label:null });
+				}				
+			} 
+
+
+			//If mark is exactly the same, don't bother with rendering
+			if (this.marks.join("-") == StCD)
+				return;
+
+			if (!$.browser.msie) {
+				for(var i=0; i<bounds[type].length; i++)
+					if (this.marks[1] == bounds[type][i].marks[1]) {
+						if (action == "mouseover")		bounds[type][i].setOptions({fillColor:defColor[type]['Sel'], fillOpacity:0.3});
+						else if (action == "mouseout")	bounds[type][i].setOptions({fillColor:defColor[type]['Blk'], fillOpacity:0.5});
+						else if (action == "click")	{
+							if (type == "CD")		bounds[type][i].setOptions({fillColor:defColor[type]['Sel'], fillOpacity:0.5});
+							//else if (type == "US")	bounds[type][i].setMap(null);
+						}
+					} else if (type == "US" && action == "click" && bounds[type][i].getMap() == null) { //repair previously deleted state
+						bounds[type][i].setOptions({fillColor:defColor[type]['Blk'], fillOpacity:0.5});
+						bounds[type][i].setMap(map);
+					}
+			}
+		}
+	}
+
+	
+
+	
+
+	function refreshGeo() {
+		params = $.data($("#map")[0], "params");
+		refresher(params);
+
+		$(".floater").remove(); 
+		$("#map").append($('<div></div>').addClass('floater').html('Loading...'));
+		//$("#map").append($('<div></div>').addClass('floater fUR').html(title));
+		//$("#main").slideUp('slow');
+		
+
+		$.ajax({
+			url: "api/nodes", 
+			data: params,
+			dataType: 'json',
+			success: function(json) {
+				$.data($("#map")[0], "latlng", null);
+				dataB = json;
+				refreshMapGeo("x");
+				$(".floater").remove();
+			},
+			error: function() {	
+				$(".floater").remove(); 
+				$("#sectOrg div").detach();
+				$("#sectLabel div").detach();
+				$("#sectOrg").append($("<div>Drill down to State level to see detail.</div>"));
+				$("#sectLabel").append($("<div>Drill down to State level to see detail.</div>"));
+			}
+		});
+
+	}
+    function refreshMapGeo(sel) {
+
+        if (markerClusterer!=null) {
+          markerClusterer.clearMarkers();
+        }
+        var markers = [];  
+		var lines = [];
+		
+		//array of Agency values checked
+		//var cRay = showChecked($('#Agency input'), ':checked');
+		//if (cRay[0] == 'All')
+		//	cRay = showChecked($('#Agency input'), '');
+			
+		//$(cRay).each(function() { alert(this); });
+
+		params = $.data($("#map")[0], "params");
+		if (params.Org!=null)
+			toggle = ["x", "Label"];
+		else
+			toggle = ["x", "Org"];
+		//toggle = toggle.split("|");
+		//if (toggle.length == 1)
+		//	toggle.push("Org");
+
+		if (dataB != null) {
+		    for (var i = 0; i < dataB.marks.cnt.length; ++i) {
+				var latlng = new G.LatLng(dataB.marks.Lat[i], dataB.marks.Lng[i]);
+
+				//var alpha = (toggle[0]!="x")?(orgs.fetch[toggle[0]]!=null):true;
+				var marker = new G.Marker({
+					position: latlng,
+					idx: i,
+					//alpha: alpha,
+					toggle: toggle
+				});
+				markers.push(marker);
+
+				path = [];
+				edges = false;
+				var line  = new G.Polyline({ path: path, strokeColor: "#cccccc", strokeOpacity: 0.5, strokeWeight: 1 });
+				lines.push(line);
+			
+			}
+			if (params.Org==null && params.Label==null)
+				sideAttrs("");
+			else {
+				if (params.Org!=null)
+					sideAttrs("Org");
+				if (params.Label!=null)
+					sideAttrs("Label");
+			}
+		    markerClusterer = new MarkerClusterer(map, markers, lines, {
+		      maxZoom: 20,
+		      gridSize: ((dataB.marks.cnt.length>500)? 25: 15)
+		    });
+		}
+    }
+

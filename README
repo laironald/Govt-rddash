@@ -1,0 +1,3 @@
+These are the core files that made up the RD Dashboard.  I've got to revisit the code once again to make it cleaner, but this acts as the base.  It uses a bunch of spaghetti code which I've gotten better about since then.  (Thanks smarty).  Either way, I know it can be improved.
+
+Cheers

@@ -1,0 +1,246 @@
+#mapToolTip {
+	border: 1px solid #3b5998;
+	font-size: 8pt;
+	padding: 5px 10px;
+	position: absolute;
+	min-width: 150px;
+	max-width: 250px;
+	top: 5px;
+	left: 10px;
+	z-index: 1000;
+	background: #fff;
+	display: none;
+	color: #333;
+	font-family: Tahoma;
+     -moz-border-radius: 8px;
+  -webkit-border-radius: 8px;
+          border-radius: 8px;
+     -moz-box-shadow: 4px 4px 10px #666666; 
+  -webkit-box-shadow: 4px 4px 10px #666666; 
+          box-shadow: 4px 4px 10px #666666; 
+}
+#mapToolTip hr {
+	margin: 2px 0px;
+	height: 1px;
+	border: 0px;
+	border-bottom: 1px solid #999;
+}
+#mapToolTip table {
+	width: 100%;
+	margin-top: 10px;
+	border-top: 1px solid #666;
+}
+#mapToolTip table caption {
+	text-align: left;
+}
+#mapToolTip table td {
+	border: 0px none;
+	padding: 2px;
+}
+.mapWrapper {
+     -moz-border-radius: 8px;
+  -webkit-border-radius: 8px;
+          border-radius: 8px;
+	padding: 10px;
+}
+#map { width: 100%; height: 360px; }
+
+span.hover {
+	cursor: normal;
+	display: block;
+}
+
+div.slider { width:180px;height:16px;padding-left:10px; }
+span.slider { padding-left: 20px; }
+div.list {
+	width: 200px;
+	padding: 0px 4px;
+	font-size: 8pt;
+	height: 110px; /*140*/
+	overflow: auto;
+}
+div.list a {
+	padding: 3px;
+	display: block;
+}
+div.list a:hover, div.list a:focus { cursor: pointer; background: #808896; }
+div.list a.sel, div.list a.sel:hover, div.list a.sel:focus { background: #00759b; }
+
+.control {
+	padding: 2px 4px;
+	font-size: 8pt;
+	font-family: Arial;
+	border: 1px solid #cccccc;
+	background: #ffffff;
+	margin-top: 5px;
+	margin-left: 2px;
+	-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=80)";
+	filter: alpha(opacity=65);
+	opacity: .65;
+	/*
+		margin-top: 5px; 
+		margin-left: 28px; 
+	*/
+	cursor: pointer;
+	color: #000000;
+	text-align: center;
+}
+.control:hover {
+	background: #f7f7f7;
+	-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
+	filter: alpha(opacity=100);
+	opacity: 1.00;
+     -moz-box-shadow: 0px 0px 5px #666666; /* FF3.5+ */
+  -webkit-box-shadow: 0px 0px 5px #666666; /* Saf3.0+, Chrome */
+          box-shadow: 0px 0px 5px #666666; /* Opera 10.5, IE 9 */
+}
+.floater { 
+	position: absolute; 
+	padding: 10px 20px; 
+	bottom: 2px; 
+	left: 2px; 
+	color: #ffffff; 
+	background: #00759b;  
+     -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+          border-radius: 5px;	
+}
+
+#example_wrapper div.download {
+	margin: 5px;
+	padding: 4px;
+	text-align: right;
+}
+#map-inputs {
+	width: 210px;
+	position: absolute;
+}
+#topTbl {
+	width: 222px;
+}
+
+/* DATA TABLES */
+.dataTables_scrollBody table td {
+	border: 0px none;
+	color: #333333;
+	font-family: Verdana;
+	font-size: 8pt;
+}
+
+
+.ui-accordion .ui-accordion-header a {
+	padding-left: 25px;
+}
+
+
+.dropdown label, .dropdown .ui-select-menu { float: left; margin-left: 5px; margin-right: 5px; }
+#agency { width: 210px; }
+a#agency-button, #agency-menu a { font-size: 10pt; text-decoration: none; color: #ffffff; }
+
+
+.mapCircle {
+	background: #333;
+     -moz-border-radius: 500px; 
+  -webkit-border-radius: 500px; 
+          border-radius: 500px; 
+	-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=80)";
+	filter: alpha(opacity=80);
+	opacity: .80;
+}
+.mapCircle:hover {
+	-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=95)";
+	filter: alpha(opacity=95);
+	opacity: .95;
+     -moz-box-shadow: 0px 0px 5px #00759b; /* FF3.5+ */
+  -webkit-box-shadow: 0px 0px 5px #00759b; /* Saf3.0+, Chrome */
+          box-shadow: 0px 0px 5px #00759b; /* Opera 10.5, IE 9 */
+}
+.mapCircleSelected {
+	background: #ff9b08;
+}
+
+#download a { 
+	color: #00759b;
+	cursor:pointer;
+	text-decoration: none;
+}
+#download a:hover { 
+	text-decoration: none;
+}
+
+
+.legend {
+	background: none;
+	width: 100%;
+	min-height: 100%;
+	border: 1px solid #333;
+	color: #fff;
+	font-size: 10pt;
+	padding: 10px;
+}
+.legend option {
+	display: block;
+}
+
+
+
+#tabs .sub-navs {width:175px;border-left:none;position:absolute;z-index:50;height:100px;}
+#tabs .sub-navs li{width:175px;border-left:1px solid black;border-bottom:1px solid black;}
+#tabs .sub-navs li a{background-image:none;background-color:#222;height:24px;padding:4px 4px 2px 10px ;border-left:1px solid #333;border-top:1px solid #333;}
+#tabs ul li a {font-size:13px;}
+
+.dataTables_wrapper {
+	min-height: 0px;
+}
+
+#downloadcsv a {
+	margin: 0px auto;
+	background: url(../img/download.png) no-repeat; 
+	padding:1px 0 2px 18px;
+	font-size:11px;
+	font-family:Verdana, Geneva, sans-serif;
+	color: #4499AA;
+	cursor: pointer;
+	text-decoration: none;
+}
+#downloadcsv a:hover {
+	background-position:0 -16px;
+	color:#DEDEDE;
+	text-decoration: none;
+}
+#downloadcsv {
+	display: block;
+	padding: 0px 5px;
+}
+
+
+.contact input.subject, .contact textarea {
+	background: none;
+	color: #f7f7f7;
+	padding: 2px;
+	border: 1px solid #666666;
+	width: 200px;
+}
+.contact input.place, .contact input.subject, .contact textarea, select {
+	border: 1px solid #111;
+	font-size: 10pt;
+	background: #333333;
+	color: #f7f7f7;
+}
+#agency, #polyselect {
+	width: 210px;
+}
+.contact input.place, .contact input.subject, .contact textarea {
+	padding: 5px;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	width: 400px;
+}
+.contact textarea { 
+	width: 550px;
+	height: 200px; 
+}
+
+.qtip {
+	font-size: 8pt;
+}

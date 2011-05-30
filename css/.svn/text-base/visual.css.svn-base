@@ -1,0 +1,93 @@
+body {
+	font-family: Tahoma, arial;
+	font-size: 8pt;
+}
+
+.side {
+	vertical-align: middle; 
+	display: block;
+	padding:2px 0;
+	border-bottom:1px solid #E0ECFF;
+	cursor:pointer;
+	overflow:hidden;
+}
+span.s1 { /*this highlights the agency names like NIH/NSF */
+	background-color: #E0FFFF;
+	color: #6495ED;
+	margin: 0px 0px 0px 5px;
+	padding: 0px 5px;
+}
+.side:hover {
+	background-color: #E0ECFF;
+}
+
+.mc {
+	padding: 6px;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #ccc #ccc #999 #ccc;
+	-webkit-box-shadow: rgba(64, 64, 64, 0.5) 0 2px 5px;
+	-moz-box-shadow: rgba(64, 64, 64, 0.5) 0 2px 5px;
+	box-shadow: rgba(64, 64, 64, 0.1) 0 2px 5px;
+	margin-right: 10px;
+	float: left;
+	font-size: 8pt;
+}
+.mc input {
+	font-size: 8pt;
+}
+
+#map {
+	width: 580px;
+	height: 400px;
+}
+
+#actions {
+	list-style: none;
+	padding: 0;
+}
+
+#inline-actions {
+	padding-top: 10px;
+}
+
+.item {
+	margin-left: 20px;
+}
+.hide, .hideL2 { display: none; }
+
+// jQuery UI
+
+.ui-autocomplete {
+	max-height: 100px;
+	overflow-y: auto;
+}
+* html .ui-autocomplete { height: 100px;
+}
+
+/* jQuery CSS */
+.ui-widget {
+	font-family: Tahoma, arial;
+	font-size: 7pt;
+}
+
+
+/* THIS IS THE CLUSTER STUFF */
+
+
+div.cloud {
+	display: block; 
+	position: absolute;
+}
+div.cloud div {
+	position: relative;
+	padding: 3px 5px; 
+	margin-top: 5px;
+	line-height: 12px;
+	font-weight: normal;
+	text-align: left;
+	background:#f8f8ff; 
+	border:1px solid #ccc; 
+	min-width: 240px;
+	display: inline-block;
+}	
